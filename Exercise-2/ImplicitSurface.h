@@ -30,7 +30,7 @@ public:
 		// TODO: implement the implicit sphere formula using the member variables m_center and m_radius
 		// f(x,y,z) = x^2 + y^2 + z^2 - R^2 when centered at origin
 		Eigen::Vector3d v = _x - m_center;
-		return v.squaredNorm() - square(d);
+		return v.squaredNorm() - square(m_radius);
 	}
 
 private:
@@ -49,9 +49,9 @@ public:
 	double Eval(const Eigen::Vector3d& _x)
 	{
 		// TODO: implement the implicit torus formula using the  variables m_center, m_radius (radius of the ring) and the radius m_a (small radius)
-		// f(x,y,z) = (x^2 + y^2 + z^2 + R^2 - a^2) - 4*R^2 * (x^2  + y^2) when centered at origin
+		// f(x,y,z) = (x^2 + y^2 + z^2 + R^2 - a^2)^2 - 4*R^2 * (x^2  + y^2) when centered at origin
 		Eigen::Vector3d v = _x - m_center;
-		double first = v.squaredNorm() + square(m_radius) - square(m_a);
+		double first = square(v.squaredNorm() + square(m_radius) - square(m_a));
 		double second = 4 * square(m_radius) * (square(v[0]) + square(v[1]));
 		return first - second;
 	}
