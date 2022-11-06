@@ -10,6 +10,11 @@ class ImplicitSurface
 {
 public:
 	virtual double Eval(const Eigen::Vector3d& x) = 0;
+
+	double square(double d)
+	{
+		return d * d;
+	}
 };
 
 
@@ -23,7 +28,9 @@ public:
 	double Eval(const Eigen::Vector3d& _x)
 	{
 		// TODO: implement the implicit sphere formula using the member variables m_center and m_radius
-		return 0.0;
+		// f(x,y,z) = x^2 + y^2 + z^2 - R^2 when centered at origin
+		Eigen::Vector3d v = _x - m_center;
+		return v.squaredNorm() - square(d);
 	}
 
 private:
@@ -42,7 +49,11 @@ public:
 	double Eval(const Eigen::Vector3d& _x)
 	{
 		// TODO: implement the implicit torus formula using the  variables m_center, m_radius (radius of the ring) and the radius m_a (small radius)
-		return 0.0;
+		// f(x,y,z) = (x^2 + y^2 + z^2 + R^2 - a^2) - 4*R^2 * (x^2  + y^2) when centered at origin
+		Eigen::Vector3d v = _x - m_center;
+		double first = v.squaredNorm() + square(m_radius) - square(m_a);
+		double second = 4 * square(m_radius) * (square(v[0]) + square(v[1]));
+		return first - second;
 	}
 
 private:
