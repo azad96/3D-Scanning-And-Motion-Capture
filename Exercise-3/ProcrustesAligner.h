@@ -9,23 +9,19 @@ public:
 		// We estimate the pose between source and target points using Procrustes algorithm.
 		// Our shapes have the same scale, therefore we don't estimate scale. We estimated rotation and translation
 		// from source points to target points.
-		std::cout << "1" << std::endl;
 		auto sourceMean = computeMean(sourcePoints);
-		std::cout << "2" << std::endl;
 		auto targetMean = computeMean(targetPoints);
-		std::cout << "3" << std::endl;
 		
 		Matrix3f rotation = estimateRotation(sourcePoints, sourceMean, targetPoints, targetMean);
-
 		Vector3f translation = computeTranslation(sourceMean, targetMean, rotation);
 
 		// TODO: Compute the transformation matrix by using the computed rotation and translation.
 		// You can access parts of the matrix with .block(start_row, start_col, num_rows, num_cols) = elements
 		
 		Matrix4f estimatedPose = Matrix4f::Identity();
-
 		estimatedPose.block(0, 0, 3, 3) = rotation;
 		estimatedPose.block(0, 3, 3, 1) = translation;
+		
 		return estimatedPose;
 	}
 
@@ -52,33 +48,20 @@ private:
 		size_t num_points = sourcePoints.size();
 		int num_dims = 3;
 		
-		
-		std::cout << "4" << std::endl;
-
 		Matrix3f XT_X = Matrix3f::Zero();
 		
 		for( int i = 0; i < sourcePoints.size(); i++ ) {
 			XT_X += (targetPoints[i] - targetMean) * (sourcePoints[i] - sourceMean).transpose();
 		}
 
-		std::cout << "5" << std::endl;
-
 		JacobiSVD<Matrix3f> svd(XT_X, Eigen::ComputeFullU | Eigen::ComputeFullV);
-
-		std::cout << "6" << std::endl;
-		
 		Matrix3f rotation = svd.matrixU() * svd.matrixV().transpose();
 
 		if (rotation.determinant() == -1) {
-			
 			Matrix3f matrix = Matrix3f::Identity();
 			matrix(2,2) = -1.0;
-			
 			rotation = svd.matrixU() * matrix * svd.matrixV().transpose();
-
 		}
-
-		std::cout << "7" << std::endl;
 
         return rotation;
 	}
