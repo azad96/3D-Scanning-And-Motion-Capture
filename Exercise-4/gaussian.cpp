@@ -17,8 +17,7 @@ struct GaussianCostFunction
 	{
 		// TODO: Implement the cost function
 		T y = 1.0 / (ceres::sqrt(T(2) * M_PI * ceres::pow(sigma[0], T(2.0)))) * ceres::exp(-ceres::pow(point.x - mu[0], T(2.0)) / (T(2) * ceres::pow(sigma[0], T(2.0))));
-		residual[0] = ceres::pow(y - point.y, T(2.0));
-		//residual[0] = ceres::abs(y - point.y);
+		residual[0] = point.y - y;
 		return true;
 	}
 
@@ -32,7 +31,7 @@ int main(int argc, char** argv)
 	google::InitGoogleLogging(argv[0]);
 
 	// Read data points
-	const std::string file_path = "C:/Users/adilm/Desktop/3DScanning/Data/points_gaussian.txt";
+	const std::string file_path = "../../Data/points_gaussian.txt";
 	const auto points = read_points_from_file<Point2D>(file_path);
 
 	// Good initial values make the optimization easier

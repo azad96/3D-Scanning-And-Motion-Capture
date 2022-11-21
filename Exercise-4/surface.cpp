@@ -18,9 +18,7 @@ struct SurfaceCostFunction
 	{
 		// TODO: Implement the cost function
 		T z = ((ceres::pow(point.x, T(2.0)) / a[0]) - (ceres::pow(point.y, T(2.0)) / b[0])) / c[0];
-		
-		residual[0] = ceres::pow(z - point.z, T(2.0));
-		//residual[0] = ceres::abs(y - point.y);
+		residual[0] = point.z - z;
 		return true;
 	}
 
@@ -35,7 +33,7 @@ int main(int argc, char** argv)
 	google::InitGoogleLogging(argv[0]);
 
 	// Read 3D surface data points and define the parameters of the problem
-	const std::string file_path = "C:/Users/adilm/Desktop/3DScanning/Data/points_surface.txt";
+	const std::string file_path = "../../Data/points_surface.txt";
 	const auto points = read_points_from_file<Point3D>(file_path);
 	
 	const double a_initial = 1.0;
