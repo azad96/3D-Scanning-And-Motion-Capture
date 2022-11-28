@@ -471,9 +471,6 @@ private:
             b(i+3*nPoints) = d[2] - s[2];
 
             //TODO: Optionally, apply a higher weight to point-to-plane correspondences
-            A(i+nPoints, 1) *= 0.1;         A(i+nPoints, 2) *= 0.1;    A(i+nPoints, 3) *= 0.1;
-            A(i+2*nPoints, 0) *= 0.1;      A(i+2*nPoints, 2) *= 0.1;   A(i+2*nPoints, 4) *= 0.1;
-            A(i+3*nPoints, 0) *= 0.1;       A(i+3*nPoints, 1) *= 0.1;  A(i+3*nPoints, 5) *= 0.1;
         }
 
         // TODO: Solve the system
