@@ -118,9 +118,9 @@ public:
         poseIncrement.apply(sourcePoint, transformedPoint);
 
         // TODO: try multiplying with Lambda  
-        residuals[0] = T(m_weight) * (transformedPoint[0] - T(m_targetPoint[0]));
-        residuals[1] = T(m_weight) * (transformedPoint[1] - T(m_targetPoint[1]));
-        residuals[2] = T(m_weight) * (transformedPoint[2] - T(m_targetPoint[2]));
+        residuals[0] = T(LAMBDA) * T(m_weight) * (transformedPoint[0] - T(m_targetPoint[0]));
+        residuals[1] = T(LAMBDA) * T(m_weight) * (transformedPoint[1] - T(m_targetPoint[1]));
+        residuals[2] = T(LAMBDA) * T(m_weight) * (transformedPoint[2] - T(m_targetPoint[2]));
 
         return true;
     }
@@ -162,9 +162,9 @@ public:
         poseIncrement.apply(sourcePoint, transformedPoint);
 
         // TODO: try multiplying with Lambda  
-        residuals[0] += T(m_targetNormal[0]) * T(m_weight) * (transformedPoint[0] - T(m_targetPoint[0]));
-        residuals[0] += T(m_targetNormal[1]) * T(m_weight) * (transformedPoint[1] - T(m_targetPoint[1]));
-        residuals[0] += T(m_targetNormal[2]) * T(m_weight) * (transformedPoint[2] - T(m_targetPoint[2]));
+        residuals[0] += T(LAMBDA) * T(m_targetNormal[0]) * T(m_weight) * (transformedPoint[0] - T(m_targetPoint[0]));
+        residuals[0] += T(LAMBDA) * T(m_targetNormal[1]) * T(m_weight) * (transformedPoint[1] - T(m_targetPoint[1]));
+        residuals[0] += T(LAMBDA) * T(m_targetNormal[2]) * T(m_weight) * (transformedPoint[2] - T(m_targetPoint[2]));
 
         return true;
     }
@@ -251,7 +251,8 @@ protected:
                 const auto& targetNormal = targetNormals[match.idx];
 
                 // TODO: Invalidate the match (set it to -1) if the angle between the normals is greater than 60
-                double angle = std::acos(sourceNormal.dot(targetNormal) / (sourceNormal.norm() * targetNormal.norm()));
+                double radian = std::acos(sourceNormal.dot(targetNormal) / (sourceNormal.norm() * targetNormal.norm()));
+                double angle = radian * 180. / M_PI;
                 if (angle > 60.) {
                     match.idx = -1;
                 }
@@ -366,7 +367,7 @@ private:
                     // to the Ceres problem.
                     problem.AddResidualBlock(
                     new ceres::AutoDiffCostFunction<PointToPlaneConstraint, 1, 6>(
-                        new PointToPlaneConstraint(sourcePoint, targetPoint, match.weight)
+                        new PointToPlaneConstraint(sourcePoint, targetPoint, targetNormal, match.weight)
                         ),
                     nullptr, poseIncrement.getData()
                 );
@@ -457,19 +458,28 @@ private:
             const auto& n = targetNormals[i];
 
             // TODO: Add the point-to-plane constraints to the system
-
+            float a1 = n[2] * s[1] - n[1] * s[2];
+            float a2 = n[0] * s[2] - n[2] * s[0];
+            float a3 = n[1] * s[0] - n[0] * s[1];
+            A(i, 0) = a1; A(i, 1) = a2; A(i, 2) = a3; A(i, 3) = n[0]; A(i, 4) = n[1]; A(i, 5) = n[2];
+            b(i) = n[0]*d[0] + n[1]*d[1] + n[2]*d[2] - n[0]*s[0] - n[1]*s[1] - n[2]*s[2]; 
 
             // TODO: Add the point-to-point constraints to the system
+            A(i+nPoints, 1) = s[2];         A(i+nPoints, 2) = -s[1];    A(i+nPoints, 3) = 1.0;
+            b(i+nPoints) = d[0] - s[0];
 
+            A(i+2*nPoints, 0) = -s[2];      A(i+2*nPoints, 2) = s[0];   A(i+2*nPoints, 4) = 1.0;
+            b(i+2*nPoints) = d[1] - s[1]; 
+
+            A(i+3*nPoints, 0) = s[1];       A(i+3*nPoints, 1) = -s[0];  A(i+3*nPoints, 5) = 1.0;
+            b(i+3*nPoints) = d[2] - s[2];
 
             //TODO: Optionally, apply a higher weight to point-to-plane correspondences
-
-
         }
 
         // TODO: Solve the system
         VectorXf x(6);
-
+        x = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
 
         float alpha = x(0), beta = x(1), gamma = x(2);
 
@@ -482,7 +492,8 @@ private:
 
         // TODO: Build the pose matrix using the rotation and translation matrices
         Matrix4f estimatedPose = Matrix4f::Identity();
-
+        estimatedPose.block<3, 3>(0, 0) = rotation;
+        estimatedPose.block<3, 1>(0, 3) = translation;
 
         return estimatedPose;
     }
