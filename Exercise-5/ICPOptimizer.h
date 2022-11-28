@@ -162,7 +162,7 @@ public:
         poseIncrement.apply(sourcePoint, transformedPoint);
 
         // TODO: try multiplying with Lambda  
-        residuals[0] += T(LAMBDA) * T(m_targetNormal[0]) * T(m_weight) * (transformedPoint[0] - T(m_targetPoint[0]));
+        residuals[0] = T(LAMBDA) * T(m_targetNormal[0]) * T(m_weight) * (transformedPoint[0] - T(m_targetPoint[0]));
         residuals[0] += T(LAMBDA) * T(m_targetNormal[1]) * T(m_weight) * (transformedPoint[1] - T(m_targetPoint[1]));
         residuals[0] += T(LAMBDA) * T(m_targetNormal[2]) * T(m_weight) * (transformedPoint[2] - T(m_targetPoint[2]));
 
@@ -349,12 +349,10 @@ private:
 
                 // TODO: Create a new point-to-point cost function and add it as constraint (i.e. residual block) 
                 // to the Ceres problem.
-                
                 problem.AddResidualBlock(
-                    new ceres::AutoDiffCostFunction<PointToPointConstraint, 3, 6>(
-                        new PointToPointConstraint(sourcePoint, targetPoint, match.weight)
-                        ),
-                    nullptr, poseIncrement.getData()
+                    PointToPointConstraint::create(sourcePoint, targetPoint, match.weight),
+                    nullptr, 
+                    poseIncrement.getData()
                 );
 
                 if (m_bUsePointToPlaneConstraints) {
@@ -366,12 +364,10 @@ private:
                     // TODO: Create a new point-to-plane cost function and add it as constraint (i.e. residual block) 
                     // to the Ceres problem.
                     problem.AddResidualBlock(
-                    new ceres::AutoDiffCostFunction<PointToPlaneConstraint, 1, 6>(
-                        new PointToPlaneConstraint(sourcePoint, targetPoint, targetNormal, match.weight)
-                        ),
-                    nullptr, poseIncrement.getData()
-                );
-
+                        PointToPlaneConstraint::create(sourcePoint, targetPoint, targetNormal, match.weight),
+                        nullptr, 
+                        poseIncrement.getData()
+                    );
                 }
             }
         }
@@ -475,6 +471,9 @@ private:
             b(i+3*nPoints) = d[2] - s[2];
 
             //TODO: Optionally, apply a higher weight to point-to-plane correspondences
+            A(i+nPoints, 1) *= 0.1;         A(i+nPoints, 2) *= 0.1;    A(i+nPoints, 3) *= 0.1;
+            A(i+2*nPoints, 0) *= 0.1;      A(i+2*nPoints, 2) *= 0.1;   A(i+2*nPoints, 4) *= 0.1;
+            A(i+3*nPoints, 0) *= 0.1;       A(i+3*nPoints, 1) *= 0.1;  A(i+3*nPoints, 5) *= 0.1;
         }
 
         // TODO: Solve the system
