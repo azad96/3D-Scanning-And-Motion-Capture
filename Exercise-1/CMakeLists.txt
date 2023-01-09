@@ -8,6 +8,10 @@ project(exercise_1)
 set(LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../Libs CACHE PATH "Path to lib folder")
 set(Eigen3_DIR ${LIBRARY_DIR}/Eigen/share/eigen3/cmake CACHE PATH "Path to installed Eigen")
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(MACOSX TRUE)
+endif()
+
 # Use pre-compiled libraries on Windows
 if(WIN32)
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -18,6 +22,11 @@ if(WIN32)
         set(FreeImage_LIBRARY_DIR ${LIBRARY_DIR}/FreeImage-3.18.0/Dist/x32/ CACHE PATH "Path to FreeImage .lib/.dll folder")
     endif()
 endif(WIN32)
+
+if(MACOSX)
+    set(FreeImage_LIBRARY_DIR /opt/homebrew/Cellar/freeimage/3.18.0/lib) # set the lib path
+    set(FreeImage_INCLUDE_DIR /opt/homebrew/Cellar/freeimage/3.18.0/include) # set the include path
+endif(MACOSX)
 
 # Set C++ flags
 set(CMAKE_CXX_STANDARD 14)
