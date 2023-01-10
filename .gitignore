@@ -1,7 +1,8 @@
 .vscode
 Data
 Libs
-Exercise*/build
+*/build
+*/output
 *.txt
 *.png
 .DS_Store
